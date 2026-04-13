@@ -13,9 +13,7 @@ import CoreDataModel
 import CoreDataPersistence
 import Foundation
 import LastPagePersistence
-#if QURAN_SYNC
-    import MobileSync
-#endif
+import MobileSync
 import NotePersistence
 import PageBookmarkPersistence
 import ReadingService
@@ -38,15 +36,21 @@ class Container: AppDependencies {
 
     private(set) lazy var lastPagePersistence: LastPagePersistence = CoreDataLastPagePersistence(stack: coreDataStack)
     private(set) lazy var pageBookmarkPersistence: PageBookmarkPersistence = {
-        #if QURAN_SYNC
-            if let syncService = mobileSyncServices?.syncService {
-                return MobileSyncPageBookmarkPersistence(syncService: syncService)
-            }
-        #endif
+        if let syncService {
+            return MobileSyncPageBookmarkPersistence(syncService: syncService)
+        }
         return CoreDataPageBookmarkPersistence(stack: coreDataStack)
     }()
 
     private(set) lazy var notePersistence: NotePersistence = CoreDataNotePersistence(stack: coreDataStack)
+    private(set) lazy var syncService: SyncService? = {
+        #if QURAN_SYNC
+            mobileSyncServices?.syncService
+        #else
+            nil
+        #endif
+    }()
+
     private(set) lazy var authenticationClient: (any AuthenticationClient)? = {
         #if QURAN_SYNC
             if let authService = mobileSyncServices?.authService {

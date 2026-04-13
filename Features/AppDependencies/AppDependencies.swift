@@ -11,6 +11,7 @@ import AuthenticationClient
 import BatchDownloader
 import Foundation
 import LastPagePersistence
+import MobileSync
 import NotePersistence
 import PageBookmarkPersistence
 import QuranResources
@@ -37,6 +38,7 @@ public protocol AppDependencies {
     var lastPagePersistence: LastPagePersistence { get }
     var notePersistence: NotePersistence { get }
     var pageBookmarkPersistence: PageBookmarkPersistence { get }
+    var syncService: SyncService? { get }
 
     var authenticationClient: (any AuthenticationClient)? { get }
 }
