@@ -154,6 +154,7 @@ private struct AppDependenciesStub: AppDependencies {
     var lastPagePersistence: LastPagePersistence { fatalError("Unused in tests") }
     var notePersistence: NotePersistence { fatalError("Unused in tests") }
     var pageBookmarkPersistence: PageBookmarkPersistence { fatalError("Unused in tests") }
+    var syncService: SyncService? { nil }
 }
 
 private func makeUser(email: String?) -> UserInfo {
