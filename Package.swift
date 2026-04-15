@@ -513,6 +513,12 @@ private func domainTargets() -> [[Target]] {
             "QuranTextKit",
             "Localization",
             "Analytics",
+        ], testDependencies: [
+            "Analytics",
+            "NotePersistence",
+            "QuranAnnotations",
+            "QuranKit",
+            "QuranTextKit",
         ]),
 
         target(type, name: "SettingsService", hasTests: false, dependencies: [
@@ -537,6 +543,8 @@ private func featuresTargets() -> [[Target]] {
             "ReadingService",
             "QuranResources",
             "AuthenticationClient",
+            "QuranAnnotations",
+            "QuranKit",
             .product(name: "MobileSync", package: "mobile-sync-spm"),
         ]),
 
@@ -620,6 +628,7 @@ private func featuresTargets() -> [[Target]] {
             "AuthenticationClient",
             "FeaturesSupport",
             "AnnotationsService",
+            .product(name: "MobileSync", package: "mobile-sync-spm"),
             "NoorUI",
             "Preferences",
             "ReadingService",
