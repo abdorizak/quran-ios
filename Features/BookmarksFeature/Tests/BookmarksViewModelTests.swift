@@ -47,7 +47,7 @@ final class BookmarksViewModelTests: XCTestCase {
         task.cancel()
     }
 
-    func test_start_updatesHighlightCount() async {
+    func test_observeHighlights_updatesHighlightCount() async {
         let highlightCollections = HighlightCollectionsUpdatesSpy()
         highlightCollections.send([
             HighlightCollectionSnapshot(
@@ -59,7 +59,7 @@ final class BookmarksViewModelTests: XCTestCase {
         ])
         let sut = makeSUT(authenticationClient: nil, highlightCollections: highlightCollections)
 
-        let task = Task { await sut.start() }
+        let task = Task { await sut.observeHighlights() }
         await waitUntil { sut.highlightCount == 1 }
         task.cancel()
     }
