@@ -54,8 +54,8 @@ public struct ContentBuilder {
         return (viewController, viewModel)
     }
 
-    // MARK: Private
+    // MARK: Internal
 
-    private let container: AppDependencies
-    private let highlightsService: QuranHighlightsService
+    let container: AppDependencies
+    let highlightsService: QuranHighlightsService
 }

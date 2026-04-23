@@ -28,6 +28,9 @@ public final class ContentViewController: UIViewController, UIGestureRecognizerD
     }
 
     deinit {
+        #if QURAN_SYNC
+            syncHighlightsTask?.cancel()
+        #endif
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -37,6 +40,7 @@ public final class ContentViewController: UIViewController, UIGestureRecognizerD
         super.viewDidLoad()
         setUpGesture()
         setUpPagesView()
+        startSyncHighlightsObservationIfNeeded()
     }
 
     public func gestureRecognizer(
@@ -68,6 +72,9 @@ public final class ContentViewController: UIViewController, UIGestureRecognizerD
     // MARK: Private
 
     private let viewModel: ContentViewModel
+    #if QURAN_SYNC
+        private var syncHighlightsTask: Task<Void, Never>?
+    #endif
 
     private func setUpPagesView() {
         let viewModel = viewModel
@@ -84,6 +91,18 @@ public final class ContentViewController: UIViewController, UIGestureRecognizerD
             }
         }
         return nil
+    }
+
+    private func startSyncHighlightsObservationIfNeeded() {
+        #if QURAN_SYNC
+            syncHighlightsTask?.cancel()
+            syncHighlightsTask = Task { [weak self] in
+                guard let self else {
+                    return
+                }
+                await viewModel.observeSyncHighlightsIfNeeded()
+            }
+        #endif
     }
 
     // MARK: - Gestures

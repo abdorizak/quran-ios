@@ -4,6 +4,9 @@
 //
 
 import AnnotationsService
+import QuranImageFeature
+import QuranKit
+import QuranTranslationFeature
 import ReadingService
 
 extension ContentBuilder {

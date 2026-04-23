@@ -81,10 +81,6 @@ public final class ContentViewModel: ObservableObject {
         configureInitialPage()
     }
 
-    deinit {
-        highlightColorsTask?.cancel()
-    }
-
     // MARK: Public
 
     @Published public var visiblePages: [Page] {
@@ -135,6 +131,20 @@ public final class ContentViewModel: ObservableObject {
         twoPagesEnabled ? .doublePage : .singlePage
     }
 
+    #if QURAN_SYNC
+        func observeSyncHighlightsIfNeeded() async {
+            guard let highlightsSyncService = deps.highlightsSyncService else {
+                return
+            }
+            for await highlights in highlightsSyncService.highlightColorsSequence() {
+                let mapped = highlights.map { verse, color in
+                    (verse, Note(verses: Set([verse]), modifiedDate: .distantPast, note: nil, color: color))
+                }
+                self.highlights.noteVerses = Self.dictionaryFrom(mapped)
+            }
+        }
+    #endif
+
     func onViewLongPressStarted(at point: CGPoint, sourceView: UIView, verse: AyahNumber) {
         longPressData = LongPressData(
             sourceView: sourceView,
@@ -171,7 +181,6 @@ public final class ContentViewModel: ObservableObject {
     // MARK: Private
 
     private var cancellables: Set<AnyCancellable> = []
-    private var highlightColorsTask: Task<Void, Never>?
 
     private let input: QuranInput
 
@@ -233,33 +242,16 @@ public final class ContentViewModel: ObservableObject {
 
     private func loadNotes() {
         #if QURAN_SYNC
-            if let highlightsSyncService = deps.highlightsSyncService {
-                highlightColorsTask?.cancel()
-                highlightColorsTask = Task { [weak self] in
-                    for await highlights in highlightsSyncService.highlightColorsSequence() {
-                        guard let self else {
-                            return
-                        }
-                        let mapped = highlights.map { verse, color in
-                            (verse, Note(verses: Set([verse]), modifiedDate: .distantPast, note: nil, color: color))
-                        }
-                        self.highlights.noteVerses = Self.dictionaryFrom(mapped)
-                    }
-                }
-            } else {
-                deps.noteService.notes(quran: deps.quran)
-                    .map { notes in notes.flatMap { note in note.verses.map { ($0, note) } } }
-                    .receive(on: DispatchQueue.main)
-                    .sink { [weak self] in self?.highlights.noteVerses = Self.dictionaryFrom($0) }
-                    .store(in: &cancellables)
+            guard deps.highlightsSyncService == nil else {
+                return
             }
-        #else
-            deps.noteService.notes(quran: deps.quran)
-                .map { notes in notes.flatMap { note in note.verses.map { ($0, note) } } }
-                .receive(on: DispatchQueue.main)
-                .sink { [weak self] in self?.highlights.noteVerses = Self.dictionaryFrom($0) }
-                .store(in: &cancellables)
         #endif
+
+        deps.noteService.notes(quran: deps.quran)
+            .map { notes in notes.flatMap { note in note.verses.map { ($0, note) } } }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.highlights.noteVerses = Self.dictionaryFrom($0) }
+            .store(in: &cancellables)
     }
 }
 

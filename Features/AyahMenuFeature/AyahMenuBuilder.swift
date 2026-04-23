@@ -68,7 +68,7 @@ public struct AyahMenuBuilder {
         return AyahMenuViewController(viewModel: viewModel)
     }
 
-    // MARK: Private
+    // MARK: Internal
 
-    private let container: AppDependencies
+    let container: AppDependencies
 }
