@@ -12,6 +12,7 @@ import QuranKit
 struct NoteItem: Equatable, Identifiable {
     let note: Note
     let verseText: String
+    let highlightColor: Note.Color?
 
     var id: Set<AyahNumber> { note.verses }
 }

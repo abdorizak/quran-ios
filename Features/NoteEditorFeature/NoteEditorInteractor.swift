@@ -22,10 +22,27 @@ public protocol NoteEditorListener: AnyObject {
 final class NoteEditorInteractor {
     // MARK: Lifecycle
 
-    init(noteService: NoteService, note: Note) {
-        self.note = note
-        self.noteService = noteService
-    }
+    #if QURAN_SYNC
+        init(
+            noteService: NoteService,
+            note: Note,
+            notesSyncService: NotesSyncService?,
+            highlightsSyncService: QuranHighlightsSyncService?
+        ) {
+            self.note = note
+            self.noteService = noteService
+            self.notesSyncService = notesSyncService
+            self.highlightsSyncService = highlightsSyncService
+        }
+    #else
+        init(
+            noteService: NoteService,
+            note: Note
+        ) {
+            self.note = note
+            self.noteService = noteService
+        }
+    #endif
 
     // MARK: Internal
 
@@ -63,6 +80,14 @@ final class NoteEditorInteractor {
                 verses: note.verses,
                 color: editorColor ?? note.color
             )
+            #if QURAN_SYNC
+                if let body = editbleNote?.note {
+                    try await notesSyncService?.setNote(body, verses: note.verses)
+                }
+                if let color = editorColor {
+                    try await highlightsSyncService?.setHighlight(verses: Array(note.verses), color: color)
+                }
+            #endif
             logger.info("NoteEditor: note saved")
             listener?.dismissNoteEditor()
         } catch {
@@ -75,6 +100,10 @@ final class NoteEditorInteractor {
         logger.info("NoteEditor: force delete note")
         do {
             try await noteService.removeNotes(with: Array(note.verses))
+            #if QURAN_SYNC
+                try await notesSyncService?.removeNotes(for: note.verses)
+                try await highlightsSyncService?.removeHighlights(verses: Array(note.verses))
+            #endif
             logger.info("NoteEditor: notes removed")
             listener?.dismissNoteEditor()
         } catch {
@@ -87,6 +116,10 @@ final class NoteEditorInteractor {
 
     private let noteService: NoteService
     private let note: Note
+    #if QURAN_SYNC
+        private let notesSyncService: NotesSyncService?
+        private let highlightsSyncService: QuranHighlightsSyncService?
+    #endif
 
     private var editbleNote: EditableNote?
 

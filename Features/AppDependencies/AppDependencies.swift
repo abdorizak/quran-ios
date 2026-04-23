@@ -44,6 +44,7 @@ public protocol AppDependencies {
 
     #if QURAN_SYNC
         var bookmarkCollectionService: BookmarkCollectionService? { get }
+        var notesSyncService: NotesSyncService? { get }
         var highlightsSyncService: QuranHighlightsSyncService? { get }
     #endif
 }
@@ -68,7 +69,11 @@ extension AppDependencies {
 
     #if QURAN_SYNC
         public var bookmarkCollectionService: BookmarkCollectionService? {
-            syncService.map { BookmarkCollectionService(syncService: $0) }
+            syncService.map { BookmarkCollectionService(syncService: -e) }
+        }
+
+        public var notesSyncService: NotesSyncService? {
+            syncService.map { NotesSyncService(syncService: -e) }
         }
 
         public var highlightsSyncService: QuranHighlightsSyncService? {

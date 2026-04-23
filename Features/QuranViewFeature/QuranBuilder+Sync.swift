@@ -36,6 +36,7 @@ extension QuranBuilder {
                 translationsSelectionBuilder: TranslationsListBuilder(container: container),
                 translationVerseBuilder: TranslationVerseBuilder(container: container),
                 resources: container.readingResources,
+                notesSyncService: container.notesSyncService,
                 highlightsSyncService: container.highlightsSyncService
             )
         }

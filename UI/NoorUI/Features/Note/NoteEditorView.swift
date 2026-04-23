@@ -23,44 +23,66 @@ public struct NoteEditorView: View {
 
     public var body: some View {
         VStack {
-            ZStack(alignment: .leading) {
+            #if QURAN_SYNC
                 HStack {
-                    Spacer()
-                    ForEach(Note.Color.sortedColors, id: \.self) { color in
-                        Button(
-                            action: { note.selectedColor = color },
-                            label: { NoteCircle(color: color.color, selected: color == note.selectedColor) }
-                        )
-                    }
+                    Button(action: {
+                        Task {
+                            await delete()
+                        }
+                    }, label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(Color.red)
+                            .padding()
+                            .background(
+                                Circle()
+                                    .fill(Color.systemBackground)
+                                    .shadow(color: Color.primary.opacity(0.5), radius: 1)
+                            )
+                    })
                     Spacer()
                 }
-
-                Button(action: {
-                    Task {
-                        await delete()
+            #else
+                ZStack(alignment: .leading) {
+                    HStack {
+                        Spacer()
+                        ForEach(Note.Color.sortedColors, id: \.self) { color in
+                            Button(
+                                action: { note.selectedColor = color },
+                                label: { NoteCircle(color: color.color, selected: color == note.selectedColor) }
+                            )
+                        }
+                        Spacer()
                     }
-                }, label: {
-                    Image(systemName: "trash")
-                        .foregroundColor(Color.red)
-                        .padding()
-                        .background(
-                            Circle()
-                                .fill(Color.systemBackground)
-                                .shadow(color: Color.primary.opacity(0.5), radius: 1)
-                        )
-                })
-            }
+
+                    Button(action: {
+                        Task {
+                            await delete()
+                        }
+                    }, label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(Color.red)
+                            .padding()
+                            .background(
+                                Circle()
+                                    .fill(Color.systemBackground)
+                                    .shadow(color: Color.primary.opacity(0.5), radius: 1)
+                            )
+                    })
+                }
+            #endif
             HStack {
                 Spacer()
                 Text(note.ayahText)
                     .lineLimit(3)
                     .font(.quran(ofSize: .small))
                     .padding(.leading)
+                #if !QURAN_SYNC
                     .overlay(HStack {
                         Rectangle().fill(note.selectedColor.color)
                             .frame(width: 4)
                         Spacer()
                     })
+                #endif
                     .environment(\.layoutDirection, .rightToLeft)
             }
 

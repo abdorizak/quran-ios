@@ -74,7 +74,7 @@ private struct NotesViewUI: View {
         let arabicSuraName = note.firstVerse.sura.arabicSuraName
         let ayahCount = note.verses.count
         let numberOfAyahs = ayahCount > 1 ? lFormat("notes.verses-count", ayahCount - 1) : ""
-        let verseColor = note.color.color.opacity(QuranHighlights.opacity)
+        let verseColor = (item.highlightColor?.color ?? .clear).opacity(QuranHighlights.opacity)
         return AnnotationListItem(
             subheading: "\(localizedVerse) \(sura: arabicSuraName) \(numberOfAyahs)",
             verseText: "\(verse: item.verseText, color: verseColor, lineLimit: 2)",
@@ -101,7 +101,8 @@ struct NotesView_Previews: PreviewProvider {
                         note: "A note without highlight",
                         color: .purple
                     ),
-                    verseText: ayahText
+                    verseText: ayahText,
+                    highlightColor: nil
                 ),
                 NoteItem(
                     note: Note(
@@ -110,7 +111,8 @@ struct NotesView_Previews: PreviewProvider {
                         note: "Remind myself to memorize it",
                         color: .green
                     ),
-                    verseText: ayahText
+                    verseText: ayahText,
+                    highlightColor: .green
                 ),
             ]
         }

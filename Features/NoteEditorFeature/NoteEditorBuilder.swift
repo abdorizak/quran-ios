@@ -6,6 +6,7 @@
 //  Copyright © 2020 Quran.com. All rights reserved.
 //
 
+import AnnotationsService
 import AppDependencies
 import QuranAnnotations
 import UIKit
@@ -21,8 +22,19 @@ public struct NoteEditorBuilder {
     // MARK: Public
 
     public func build(withListener listener: NoteEditorListener, note: Note) -> UIViewController {
-        let noteService = container.noteService()
-        let viewModel = NoteEditorInteractor(noteService: noteService, note: note)
+        #if QURAN_SYNC
+            let viewModel = NoteEditorInteractor(
+                noteService: container.noteService(),
+                note: note,
+                notesSyncService: container.notesSyncService,
+                highlightsSyncService: container.highlightsSyncService
+            )
+        #else
+            let viewModel = NoteEditorInteractor(
+                noteService: container.noteService(),
+                note: note
+            )
+        #endif
         let viewController = NoteEditorViewController(viewModel: viewModel)
         viewModel.listener = listener
         return viewController

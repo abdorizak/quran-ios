@@ -73,6 +73,7 @@ final class QuranInteractor: WordPointerListener, ContentListener, NoteEditorLis
         let translationVerseBuilder: TranslationVerseBuilder
         let resources: ReadingResourcesService
         #if QURAN_SYNC
+            let notesSyncService: NotesSyncService?
             let highlightsSyncService: QuranHighlightsSyncService?
         #endif
     }
@@ -367,8 +368,11 @@ final class QuranInteractor: WordPointerListener, ContentListener, NoteEditorLis
     private func forceDeleteNotes(_ notes: [Note], verses: [AyahNumber]) async {
         contentViewModel?.removeAyahMenuHighlight()
         do {
-            if notes.contains(where: { !($0.note ?? "").isEmpty }) {
+            if notes.contains(where: { !(-e.note ?? "").isEmpty }) {
                 try await deps.noteService.removeNotes(with: verses)
+                #if QURAN_SYNC
+                    try? await deps.notesSyncService?.removeNotes(for: Set(verses))
+                #endif
             } else {
                 try await deps.noteService.removeHighlights(with: verses)
                 #if QURAN_SYNC

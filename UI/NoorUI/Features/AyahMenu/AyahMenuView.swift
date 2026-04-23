@@ -81,15 +81,23 @@ private struct AyahMenuViewList: View {
 
     var editNote: some View {
         Row(title: l("ayah.menu.edit-note"), action: dataObject.actions.addNote) {
-            Image(systemName: "text.bubble.fill")
-                .foregroundColor(dataObject.highlightingColor.color)
+            #if QURAN_SYNC
+                NoorSystemImage.note.image
+            #else
+                Image(systemName: "text.bubble.fill")
+                    .foregroundColor(dataObject.highlightingColor.color)
+            #endif
         }
     }
 
     var addNote: some View {
         Row(title: l("ayah.menu.add-note"), action: dataObject.actions.addNote) {
-            Image(systemName: "plus.bubble.fill")
-                .foregroundColor(dataObject.highlightingColor.color)
+            #if QURAN_SYNC
+                NoorSystemImage.note.image
+            #else
+                Image(systemName: "plus.bubble.fill")
+                    .foregroundColor(dataObject.highlightingColor.color)
+            #endif
         }
     }
 

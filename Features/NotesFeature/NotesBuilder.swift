@@ -6,6 +6,7 @@
 //  Copyright © 2020 Quran.com. All rights reserved.
 //
 
+import AnnotationsService
 import AppDependencies
 import FeaturesSupport
 import QuranKit
@@ -28,14 +29,27 @@ public struct NotesBuilder {
             quranFileURL: container.quranUthmaniV2Database
         )
 
-        let viewModel = NotesViewModel(
-            analytics: container.analytics,
-            noteService: container.noteService(),
-            textRetriever: textRetriever,
-            navigateTo: { [weak listener] verse in
-                listener?.navigateTo(page: verse.page, lastPage: nil, highlightingSearchAyah: nil)
-            }
-        )
+        #if QURAN_SYNC
+            let viewModel = NotesViewModel(
+                analytics: container.analytics,
+                noteService: container.noteService(),
+                textRetriever: textRetriever,
+                navigateTo: { [weak listener] verse in
+                    listener?.navigateTo(page: verse.page, lastPage: nil, highlightingSearchAyah: nil)
+                },
+                notesSyncService: container.notesSyncService,
+                highlightsSyncService: container.highlightsSyncService
+            )
+        #else
+            let viewModel = NotesViewModel(
+                analytics: container.analytics,
+                noteService: container.noteService(),
+                textRetriever: textRetriever,
+                navigateTo: { [weak listener] verse in
+                    listener?.navigateTo(page: verse.page, lastPage: nil, highlightingSearchAyah: nil)
+                }
+            )
+        #endif
         let viewController = NotesViewController(viewModel: viewModel)
         return viewController
     }
