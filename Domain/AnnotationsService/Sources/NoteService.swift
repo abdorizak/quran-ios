@@ -18,23 +18,12 @@ import QuranText
 import QuranTextKit
 
 public struct NoteService {
-    public typealias SyncHighlights = @Sendable (_ verses: [AyahNumber], _ color: Note.Color) async throws -> Void
-    public typealias RemoveSyncedHighlights = @Sendable (_ verses: [AyahNumber]) async throws -> Void
-
     // MARK: Lifecycle
 
-    public init(
-        persistence: NotePersistence,
-        textService: QuranTextDataService,
-        analytics: AnalyticsLibrary,
-        syncHighlights: SyncHighlights? = nil,
-        removeSyncedHighlights: RemoveSyncedHighlights? = nil
-    ) {
+    public init(persistence: NotePersistence, textService: QuranTextDataService, analytics: AnalyticsLibrary) {
         self.persistence = persistence
         self.textService = textService
         self.analytics = analytics
-        self.syncHighlights = syncHighlights
-        self.removeSyncedHighlights = removeSyncedHighlights
     }
 
     // MARK: Public
@@ -48,9 +37,8 @@ public struct NoteService {
         lastUsedHighlightColor = color
 
         analytics.highlight(verses: verses)
-        let persistenceVerses = verses.map(VersePersistenceModel.init)
-        let persistenceModel = try await persistence.setNote(nil, verses: persistenceVerses, color: color.rawValue)
-        try await syncHighlights?(persistenceModel.verses.map { AyahNumber(quran: quran, $0) }, color)
+        let verses = verses.map(VersePersistenceModel.init)
+        let persistenceModel = try await persistence.setNote(nil, verses: verses, color: color.rawValue)
         return Note(quran: quran, persistenceModel)
     }
 
@@ -59,25 +47,18 @@ public struct NoteService {
         lastUsedHighlightColor = color
 
         analytics.updateNote(verses: verses)
-        let verses = Array(verses)
-        let persistenceVerses = verses.map(VersePersistenceModel.init)
-        _ = try await persistence.setNote(note, verses: persistenceVerses, color: color.rawValue)
-        #if !QURAN_SYNC
-            try await syncHighlights?(verses, color)
-        #endif
+        let verses = verses.map(VersePersistenceModel.init)
+        _ = try await persistence.setNote(note, verses: Array(verses), color: color.rawValue)
     }
 
     public func removeNotes(with verses: [AyahNumber]) async throws {
         analytics.unhighlight(verses: verses)
-        let persistenceVerses = verses.map(VersePersistenceModel.init)
-        _ = try await persistence.removeNotes(with: persistenceVerses)
+        let verses = verses.map(VersePersistenceModel.init)
+        _ = try await persistence.removeNotes(with: verses)
     }
 
     public func removeHighlights(with verses: [AyahNumber]) async throws {
-        analytics.unhighlight(verses: verses)
-        let persistenceVerses = verses.map(VersePersistenceModel.init)
-        _ = try await persistence.removeNotes(with: persistenceVerses)
-        try await removeSyncedHighlights?(verses)
+        try await removeNotes(with: verses)
     }
 
     public func notes(quran: Quran) -> AnyPublisher<[Note], Never> {
@@ -100,8 +81,6 @@ public struct NoteService {
     let persistence: NotePersistence
     let textService: QuranTextDataService
     let analytics: AnalyticsLibrary
-    let syncHighlights: SyncHighlights?
-    let removeSyncedHighlights: RemoveSyncedHighlights?
 
     // MARK: Private
 

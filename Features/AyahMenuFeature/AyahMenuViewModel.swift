@@ -41,6 +41,9 @@ final class AyahMenuViewModel {
         let verses: [AyahNumber]
         let notes: [Note]
         let noteService: NoteService
+        #if QURAN_SYNC
+            let highlightsSyncService: QuranHighlightsSyncService?
+        #endif
         let textRetriever: ShareableVerseTextRetriever
         let quranContentStatePreferences = QuranContentStatePreferences.shared
     }
@@ -116,17 +119,29 @@ final class AyahMenuViewModel {
 
     func editNote() async {
         logger.info("AyahMenu: edit notes. Verses: \(deps.verses)")
-        let notes = deps.notes
-        let color = deps.noteService.color(from: notes)
-        if let note = await _updateHighlight(color: color) {
-            listener?.editNote(note)
-        }
+        #if QURAN_SYNC
+            listener?.editNote(noteForEditing())
+        #else
+            let notes = deps.notes
+            let color = deps.noteService.color(from: notes)
+            if let note = await _updateHighlight(color: color) {
+                listener?.editNote(note)
+            }
+        #endif
     }
 
     func updateHighlight(color: Note.Color) async {
         logger.info("AyahMenu: update verse highlights. Verses: \(deps.verses)")
         listener?.dismissAyahMenu()
-        _ = await _updateHighlight(color: color)
+        #if QURAN_SYNC
+            do {
+                try await deps.highlightsSyncService?.setHighlight(verses: deps.verses, color: color)
+            } catch {
+                crasher.recordError(error, reason: "Failed to set synced highlights")
+            }
+        #else
+            _ = await _updateHighlight(color: color)
+        #endif
     }
 
     func showTranslation() {
@@ -168,6 +183,21 @@ final class AyahMenuViewModel {
             !(note.note ?? "").isEmpty
         }
     }
+
+    #if QURAN_SYNC
+        private func noteForEditing() -> Note {
+            if let existingNote = deps.notes.max(by: { $0.modifiedDate < $1.modifiedDate }) {
+                return existingNote
+            }
+
+            return Note(
+                verses: Set(deps.verses),
+                modifiedDate: Date(),
+                note: nil,
+                color: deps.noteService.color(from: deps.notes)
+            )
+        }
+    #endif
 
     private func _updateHighlight(color: Note.Color) async -> Note? {
         let quran = ReadingPreferences.shared.reading.quran

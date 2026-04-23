@@ -72,6 +72,9 @@ final class QuranInteractor: WordPointerListener, ContentListener, NoteEditorLis
         let translationsSelectionBuilder: TranslationsListBuilder
         let translationVerseBuilder: TranslationVerseBuilder
         let resources: ReadingResourcesService
+        #if QURAN_SYNC
+            let highlightsSyncService: QuranHighlightsSyncService?
+        #endif
     }
 
     // MARK: Lifecycle
@@ -364,7 +367,14 @@ final class QuranInteractor: WordPointerListener, ContentListener, NoteEditorLis
     private func forceDeleteNotes(_ notes: [Note], verses: [AyahNumber]) async {
         contentViewModel?.removeAyahMenuHighlight()
         do {
-            try await deps.noteService.removeNotes(with: verses)
+            if notes.contains(where: { !($0.note ?? "").isEmpty }) {
+                try await deps.noteService.removeNotes(with: verses)
+            } else {
+                try await deps.noteService.removeHighlights(with: verses)
+                #if QURAN_SYNC
+                    try? await deps.highlightsSyncService?.removeHighlights(verses: verses)
+                #endif
+            }
         } catch {
             crasher.recordError(error, reason: "Failed to remove notes")
         }

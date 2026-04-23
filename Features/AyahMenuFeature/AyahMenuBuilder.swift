@@ -6,6 +6,7 @@
 //  Copyright © 2019 Quran.com. All rights reserved.
 //
 
+import AnnotationsService
 import AppDependencies
 import QuranAnnotations
 import QuranKit
@@ -46,14 +47,27 @@ public struct AyahMenuBuilder {
             quranFileURL: container.quranUthmaniV2Database
         )
         let noteService = container.noteService()
-        let viewModel = AyahMenuViewModel(deps: AyahMenuViewModel.Deps(
-            sourceView: input.sourceView,
-            pointInView: input.pointInView,
-            verses: input.verses,
-            notes: input.notes,
-            noteService: noteService,
-            textRetriever: textRetriever
-        ))
+
+        #if QURAN_SYNC
+            let viewModel = AyahMenuViewModel(deps: AyahMenuViewModel.Deps(
+                sourceView: input.sourceView,
+                pointInView: input.pointInView,
+                verses: input.verses,
+                notes: input.notes,
+                noteService: noteService,
+                highlightsSyncService: container.highlightsSyncService,
+                textRetriever: textRetriever
+            ))
+        #else
+            let viewModel = AyahMenuViewModel(deps: AyahMenuViewModel.Deps(
+                sourceView: input.sourceView,
+                pointInView: input.pointInView,
+                verses: input.verses,
+                notes: input.notes,
+                noteService: noteService,
+                textRetriever: textRetriever
+            ))
+        #endif
         viewModel.listener = listener
         return AyahMenuViewController(viewModel: viewModel)
     }

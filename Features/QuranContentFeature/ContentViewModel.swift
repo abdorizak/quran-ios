@@ -39,6 +39,9 @@ public final class ContentViewModel: ObservableObject {
         let quran: Quran
 
         let highlightsService: QuranHighlightsService
+        #if QURAN_SYNC
+            let highlightsSyncService: QuranHighlightsSyncService?
+        #endif
 
         let imageDataSourceBuilder: ContentImageBuilder
         let translationDataSourceBuilder: ContentTranslationBuilder
@@ -76,6 +79,10 @@ public final class ContentViewModel: ObservableObject {
 
         loadNotes()
         configureInitialPage()
+    }
+
+    deinit {
+        highlightColorsTask?.cancel()
     }
 
     // MARK: Public
@@ -164,6 +171,7 @@ public final class ContentViewModel: ObservableObject {
     // MARK: Private
 
     private var cancellables: Set<AnyCancellable> = []
+    private var highlightColorsTask: Task<Void, Never>?
 
     private let input: QuranInput
 
@@ -224,11 +232,34 @@ public final class ContentViewModel: ObservableObject {
     }
 
     private func loadNotes() {
-        deps.noteService.notes(quran: deps.quran)
-            .map { notes in notes.flatMap { note in note.verses.map { ($0, note) } } }
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] in self?.highlights.noteVerses = Self.dictionaryFrom($0) }
-            .store(in: &cancellables)
+        #if QURAN_SYNC
+            if let highlightsSyncService = deps.highlightsSyncService {
+                highlightColorsTask?.cancel()
+                highlightColorsTask = Task { [weak self] in
+                    for await highlights in highlightsSyncService.highlightColorsSequence() {
+                        guard let self else {
+                            return
+                        }
+                        let mapped = highlights.map { verse, color in
+                            (verse, Note(verses: Set([verse]), modifiedDate: .distantPast, note: nil, color: color))
+                        }
+                        self.highlights.noteVerses = Self.dictionaryFrom(mapped)
+                    }
+                }
+            } else {
+                deps.noteService.notes(quran: deps.quran)
+                    .map { notes in notes.flatMap { note in note.verses.map { ($0, note) } } }
+                    .receive(on: DispatchQueue.main)
+                    .sink { [weak self] in self?.highlights.noteVerses = Self.dictionaryFrom($0) }
+                    .store(in: &cancellables)
+            }
+        #else
+            deps.noteService.notes(quran: deps.quran)
+                .map { notes in notes.flatMap { note in note.verses.map { ($0, note) } } }
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] in self?.highlights.noteVerses = Self.dictionaryFrom($0) }
+                .store(in: &cancellables)
+        #endif
     }
 }
 
