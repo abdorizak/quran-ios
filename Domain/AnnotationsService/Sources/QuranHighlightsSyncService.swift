@@ -7,9 +7,9 @@
 
 import Foundation
 import MobileSync
-import ReadingService
 import QuranAnnotations
 import QuranKit
+import ReadingService
 
 #if QURAN_SYNC
 
@@ -95,11 +95,11 @@ import QuranKit
 
         // MARK: Private
 
-        private let collectionService: BookmarkCollectionService
-
         private enum QuranHighlightsSyncError: Error {
             case collectionUnavailable(QuranAnnotations.Note.Color)
         }
+
+        private let collectionService: BookmarkCollectionService
 
         private func ensureHighlightCollection(for color: QuranAnnotations.Note.Color) async throws -> CollectionWithBookmarks {
             if let existing = try await findHighlightCollection(for: color) {
