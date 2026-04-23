@@ -24,14 +24,22 @@ final class BookmarksViewModel: ObservableObject {
     init(
         analytics: AnalyticsLibrary,
         service: PageBookmarkService,
+        highlightCollectionsUpdates: (() -> AsyncThrowingStream<[HighlightCollectionSnapshot], Error>)?,
         authenticationClient: (any AuthenticationClient)?,
-        navigateTo: @escaping (Page) -> Void
+        navigateTo: @escaping (Page) -> Void,
+        makeHighlightsController: (() -> UIViewController)?
     ) {
         self.analytics = analytics
         self.service = service
+        self.highlightCollectionsUpdates = highlightCollectionsUpdates
         self.authenticationClient = authenticationClient
         self.navigateTo = navigateTo
+        self.makeHighlightsController = makeHighlightsController
         isSyncBannerDismissed = preferences.isSyncBannerDismissed
+    }
+
+    deinit {
+        highlightTask?.cancel()
     }
 
     // MARK: Internal
@@ -41,6 +49,7 @@ final class BookmarksViewModel: ObservableObject {
     @Published var bookmarks: [PageBookmark] = []
     @Published var isAuthenticated: Bool = false
     @Published var isSyncBannerDismissed: Bool
+    @Published var highlightCount: Int = 0
 
     weak var presenter: UIViewController?
 
@@ -48,11 +57,27 @@ final class BookmarksViewModel: ObservableObject {
         !isAuthenticated && !isSyncBannerDismissed
     }
 
+    var shouldShowHighlights: Bool {
+        highlightCollectionsUpdates != nil
+    }
+
     func start() async {
         if let authenticationClient {
             isAuthenticated = await authenticationClient.safelyRestoreState() == .authenticated
         } else {
             isAuthenticated = false
+        }
+
+        if let highlightCollectionsUpdates, highlightTask == nil {
+            highlightTask = Task { @MainActor [weak self] in
+                do {
+                    for try await collections in highlightCollectionsUpdates() {
+                        self?.highlightCount = HighlightCollection.count(in: collections)
+                    }
+                } catch {
+                    self?.error = error
+                }
+            }
         }
 
         let bookmarksSequence = readingPreferences.$reading
@@ -73,6 +98,14 @@ final class BookmarksViewModel: ObservableObject {
         logger.info("Bookmarks: select bookmark at \(item.page)")
         analytics.openingQuran(from: .bookmarks)
         navigateTo(item.page)
+    }
+
+    func showHighlights() {
+        logger.info("Bookmarks: show highlights")
+        guard let makeHighlightsController else {
+            return
+        }
+        presenter?.navigationController?.pushViewController(makeHighlightsController(), animated: true)
     }
 
     func deleteItem(_ pageBookmark: PageBookmark) async {
@@ -119,9 +152,12 @@ final class BookmarksViewModel: ObservableObject {
     private let navigateTo: (Page) -> Void
     private let analytics: AnalyticsLibrary
     private let service: PageBookmarkService
+    private let highlightCollectionsUpdates: (() -> AsyncThrowingStream<[HighlightCollectionSnapshot], Error>)?
     private let authenticationClient: (any AuthenticationClient)?
+    private let makeHighlightsController: (() -> UIViewController)?
     private let readingPreferences = ReadingPreferences.shared
     private let preferences = BookmarksPreferences.shared
+    private var highlightTask: Task<Void, Never>?
 
     private func requireAuthenticationClient() throws -> any AuthenticationClient {
         guard let authenticationClient else {

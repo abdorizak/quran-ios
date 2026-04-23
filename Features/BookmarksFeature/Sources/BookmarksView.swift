@@ -22,8 +22,11 @@ struct BookmarksView: View {
             error: $viewModel.error,
             bookmarks: viewModel.bookmarks,
             shouldShowSyncBanner: viewModel.shouldShowSyncBanner,
+            shouldShowHighlights: viewModel.shouldShowHighlights,
+            highlightCount: viewModel.highlightCount,
             start: { await viewModel.start() },
             selectAction: { viewModel.navigateTo($0) },
+            selectHighlightsAction: { viewModel.showHighlights() },
             deleteAction: { await viewModel.deleteItem($0) },
             dismissSyncBanner: { viewModel.dismissSyncBanner() },
             signInAction: { await viewModel.loginToQuranCom() }
@@ -40,9 +43,12 @@ private struct BookmarksViewUI: View {
 
     let bookmarks: [PageBookmark]
     let shouldShowSyncBanner: Bool
+    let shouldShowHighlights: Bool
+    let highlightCount: Int
 
     let start: AsyncAction
     let selectAction: ItemAction<PageBookmark>
+    let selectHighlightsAction: () -> Void
     let deleteAction: AsyncItemAction<PageBookmark>
     let dismissSyncBanner: () -> Void
     let signInAction: @MainActor () async -> Void
@@ -60,6 +66,11 @@ private struct BookmarksViewUI: View {
                             }
                         }
                     #endif
+                    if shouldShowHighlights {
+                        NoorBasicSection {
+                            highlightsItem
+                        }
+                    }
                     NoorSection(bookmarks) { bookmark in
                         listItem(bookmark)
                     }
@@ -84,6 +95,16 @@ private struct BookmarksViewUI: View {
                 }
             #endif
 
+            if shouldShowHighlights {
+                NoorList {
+                    NoorBasicSection {
+                        highlightsItem
+                    }
+                }
+                .frame(maxHeight: 92)
+                .padding(.horizontal)
+            }
+
             noData
         }
     }
@@ -101,6 +122,16 @@ private struct BookmarksViewUI: View {
             dismiss: dismissSyncBanner,
             signInAction: signInAction
         )
+    }
+
+    private var highlightsItem: some View {
+        NoorListItem(
+            image: .init(.bookmark, color: .yellow),
+            title: .text(l("highlights.title")),
+            accessory: .text(NumberFormatter.shared.format(highlightCount))
+        ) {
+            selectHighlightsAction()
+        }
     }
 
     private func listItem(_ bookmark: PageBookmark) -> some View {
@@ -193,8 +224,11 @@ struct BookmarksView_Previews: PreviewProvider {
                     error: $error,
                     bookmarks: items,
                     shouldShowSyncBanner: true,
+                    shouldShowHighlights: true,
+                    highlightCount: 6,
                     start: {},
                     selectAction: { _ in },
+                    selectHighlightsAction: {},
                     deleteAction: { item in items = items.filter { $0 != item } },
                     dismissSyncBanner: {},
                     signInAction: {}

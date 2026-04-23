@@ -26,10 +26,12 @@ public struct BookmarksBuilder {
         let viewModel = BookmarksViewModel(
             analytics: container.analytics,
             service: service,
+            highlightCollectionsUpdates: makeHighlightCollectionsUpdates(),
             authenticationClient: container.authenticationClient,
             navigateTo: { [weak listener] page in
                 listener?.navigateTo(page: page, lastPage: nil, highlightingSearchAyah: nil)
-            }
+            },
+            makeHighlightsController: makeHighlightsController(listener: listener)
         )
         let viewController = BookmarksViewController(viewModel: viewModel)
         return viewController
@@ -38,4 +40,26 @@ public struct BookmarksBuilder {
     // MARK: Internal
 
     let container: AppDependencies
+
+    // MARK: Private
+
+    private func makeHighlightsController(listener: QuranNavigator) -> (() -> UIViewController)? {
+        guard container.syncService != nil else {
+            return nil
+        }
+
+        return { [container] in
+            HighlightsBuilder(container: container, listener: listener).build()
+        }
+    }
+
+    private func makeHighlightCollectionsUpdates() -> (() -> AsyncThrowingStream<[HighlightCollectionSnapshot], Error>)? {
+        guard let syncService = container.syncService else {
+            return nil
+        }
+
+        return {
+            HighlightCollection.updates(from: syncService)
+        }
+    }
 }

@@ -47,6 +47,23 @@ final class BookmarksViewModelTests: XCTestCase {
         task.cancel()
     }
 
+    func test_start_updatesHighlightCount() async {
+        let highlightCollections = HighlightCollectionsUpdatesSpy()
+        highlightCollections.send([
+            HighlightCollectionSnapshot(
+                name: "red",
+                bookmarks: [
+                    HighlightBookmarkSnapshot(sura: 1, ayah: 1, modifiedDate: Date()),
+                ]
+            ),
+        ])
+        let sut = makeSUT(authenticationClient: nil, highlightCollections: highlightCollections)
+
+        let task = Task { await sut.start() }
+        await waitUntil { sut.highlightCount == 1 }
+        task.cancel()
+    }
+
     func test_loginToQuranCom_setsAuthenticated_whenLoginSucceeds() async {
         let client = AuthenticationClientSpy()
         let sut = makeSUT(authenticationClient: client)
@@ -75,13 +92,18 @@ final class BookmarksViewModelTests: XCTestCase {
 
     // MARK: Private
 
-    private func makeSUT(authenticationClient: (any AuthenticationClient)?) -> BookmarksViewModel {
+    private func makeSUT(
+        authenticationClient: (any AuthenticationClient)?,
+        highlightCollections: HighlightCollectionsUpdatesSpy? = HighlightCollectionsUpdatesSpy()
+    ) -> BookmarksViewModel {
         let service = PageBookmarkService(persistence: PageBookmarkPersistenceSpy())
         return BookmarksViewModel(
             analytics: AnalyticsSpy(),
             service: service,
+            highlightCollectionsUpdates: highlightCollections?.updates,
             authenticationClient: authenticationClient,
-            navigateTo: { _ in }
+            navigateTo: { _ in },
+            makeHighlightsController: { UIViewController() }
         )
     }
 
@@ -113,6 +135,23 @@ private struct PageBookmarkPersistenceSpy: PageBookmarkPersistence {
     func insertPageBookmark(_: Int) async throws {}
     func removePageBookmark(_: Int) async throws {}
     func removeAllPageBookmarks() async throws {}
+}
+
+private final class HighlightCollectionsUpdatesSpy {
+    private var currentCollections: [HighlightCollectionSnapshot] = []
+    private var continuation: AsyncThrowingStream<[HighlightCollectionSnapshot], Error>.Continuation?
+
+    func updates() -> AsyncThrowingStream<[HighlightCollectionSnapshot], Error> {
+        AsyncThrowingStream { continuation in
+            self.continuation = continuation
+            continuation.yield(self.currentCollections)
+        }
+    }
+
+    func send(_ collections: [HighlightCollectionSnapshot]) {
+        currentCollections = collections
+        continuation?.yield(collections)
+    }
 }
 
 private final class AuthenticationClientSpy: AuthenticationClient {
