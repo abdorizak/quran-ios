@@ -82,10 +82,11 @@ final class NoteEditorInteractor {
             )
             #if QURAN_SYNC
                 if let body = editbleNote?.note {
-                    try await notesSyncService?.setNote(body, verses: note.verses)
-                }
-                if let color = editorColor {
-                    try await highlightsSyncService?.setHighlight(verses: Array(note.verses), color: color)
+                    do {
+                        try await notesSyncService?.setNote(body, verses: note.verses)
+                    } catch {
+                        crasher.recordError(error, reason: "Failed to sync note")
+                    }
                 }
             #endif
             logger.info("NoteEditor: note saved")

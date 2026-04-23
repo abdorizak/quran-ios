@@ -30,14 +30,12 @@ final class NotesViewModel: ObservableObject {
             noteService: NoteService,
             textRetriever: ShareableVerseTextRetriever,
             navigateTo: @escaping (AyahNumber) -> Void,
-            notesSyncService: NotesSyncService?,
             highlightsSyncService: QuranHighlightsSyncService?
         ) {
             self.analytics = analytics
             self.noteService = noteService
             self.textRetriever = textRetriever
             self.navigateTo = navigateTo
-            self.notesSyncService = notesSyncService
             self.highlightsSyncService = highlightsSyncService
         }
     #else
@@ -130,7 +128,6 @@ final class NotesViewModel: ObservableObject {
     private let textRetriever: ShareableVerseTextRetriever
     private let navigateTo: (AyahNumber) -> Void
     #if QURAN_SYNC
-        private let notesSyncService: NotesSyncService?
         private let highlightsSyncService: QuranHighlightsSyncService?
     #endif
     private let readingPreferences = ReadingPreferences.shared

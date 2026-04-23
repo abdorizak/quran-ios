@@ -37,7 +37,6 @@ public struct NotesBuilder {
                 navigateTo: { [weak listener] verse in
                     listener?.navigateTo(page: verse.page, lastPage: nil, highlightingSearchAyah: nil)
                 },
-                notesSyncService: container.notesSyncService,
                 highlightsSyncService: container.highlightsSyncService
             )
         #else

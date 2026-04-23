@@ -69,11 +69,11 @@ extension AppDependencies {
 
     #if QURAN_SYNC
         public var bookmarkCollectionService: BookmarkCollectionService? {
-            syncService.map { BookmarkCollectionService(syncService: -e) }
+            syncService.map { BookmarkCollectionService(syncService: $0) }
         }
 
         public var notesSyncService: NotesSyncService? {
-            syncService.map { NotesSyncService(syncService: -e) }
+            syncService.map { NotesSyncService(syncService: $0) }
         }
 
         public var highlightsSyncService: QuranHighlightsSyncService? {
