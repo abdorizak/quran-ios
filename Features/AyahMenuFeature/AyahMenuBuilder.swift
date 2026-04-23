@@ -49,15 +49,11 @@ public struct AyahMenuBuilder {
         let noteService = container.noteService()
 
         #if QURAN_SYNC
-            let viewModel = AyahMenuViewModel(deps: AyahMenuViewModel.Deps(
-                sourceView: input.sourceView,
-                pointInView: input.pointInView,
-                verses: input.verses,
-                notes: input.notes,
+            let viewModel = makeSyncViewModel(
+                input: input,
                 noteService: noteService,
-                highlightsSyncService: container.highlightsSyncService,
                 textRetriever: textRetriever
-            ))
+            )
         #else
             let viewModel = AyahMenuViewModel(deps: AyahMenuViewModel.Deps(
                 sourceView: input.sourceView,

@@ -30,15 +30,10 @@ public struct ContentBuilder {
         let lastPageUpdater = LastPageUpdater(service: lastPageService)
 
         #if QURAN_SYNC
-            let interactorDeps = ContentViewModel.Deps(
-                analytics: container.analytics,
-                noteService: noteService,
-                lastPageUpdater: lastPageUpdater,
+            let interactorDeps = makeSyncInteractorDeps(
                 quran: quran,
-                highlightsService: highlightsService,
-                highlightsSyncService: container.highlightsSyncService,
-                imageDataSourceBuilder: ContentImageBuilder(container: container, highlightsService: highlightsService),
-                translationDataSourceBuilder: ContentTranslationBuilder(container: container, highlightsService: highlightsService)
+                noteService: noteService,
+                lastPageUpdater: lastPageUpdater
             )
         #else
             let interactorDeps = ContentViewModel.Deps(

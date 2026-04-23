@@ -37,21 +37,10 @@ public struct QuranBuilder {
         let pageBookmarkService = PageBookmarkService(persistence: container.pageBookmarkPersistence)
 
         #if QURAN_SYNC
-            let interactorDeps = QuranInteractor.Deps(
+            let interactorDeps = makeSyncInteractorDeps(
                 quran: quran,
-                analytics: container.analytics,
                 pageBookmarkService: pageBookmarkService,
-                noteService: container.noteService(),
-                ayahMenuBuilder: AyahMenuBuilder(container: container),
-                moreMenuBuilder: MoreMenuBuilder(),
-                audioBannerBuilder: AudioBannerBuilder(container: container),
-                wordPointerBuilder: WordPointerBuilder(container: container),
-                noteEditorBuilder: NoteEditorBuilder(container: container),
-                contentBuilder: ContentBuilder(container: container, highlightsService: highlightsService),
-                translationsSelectionBuilder: TranslationsListBuilder(container: container),
-                translationVerseBuilder: TranslationVerseBuilder(container: container),
-                resources: container.readingResources,
-                highlightsSyncService: container.highlightsSyncService
+                highlightsService: highlightsService
             )
         #else
             let interactorDeps = QuranInteractor.Deps(
