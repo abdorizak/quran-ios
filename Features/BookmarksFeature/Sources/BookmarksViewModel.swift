@@ -38,10 +38,6 @@ final class BookmarksViewModel: ObservableObject {
         isSyncBannerDismissed = preferences.isSyncBannerDismissed
     }
 
-    deinit {
-        highlightTask?.cancel()
-    }
-
     // MARK: Internal
 
     @Published var editMode: EditMode = .inactive
@@ -68,18 +64,6 @@ final class BookmarksViewModel: ObservableObject {
             isAuthenticated = false
         }
 
-        if let highlightCollectionsUpdates, highlightTask == nil {
-            highlightTask = Task { @MainActor [weak self] in
-                do {
-                    for try await collections in highlightCollectionsUpdates() {
-                        self?.highlightCount = HighlightCollection.count(in: collections)
-                    }
-                } catch {
-                    self?.error = error
-                }
-            }
-        }
-
         let bookmarksSequence = readingPreferences.$reading
             .prepend(readingPreferences.reading)
             .map { [service] reading in
@@ -91,6 +75,20 @@ final class BookmarksViewModel: ObservableObject {
         for await bookmarks in bookmarksSequence {
             self.bookmarks = bookmarks
                 .sorted { $0.creationDate > $1.creationDate }
+        }
+    }
+
+    func observeHighlights() async {
+        guard let highlightCollectionsUpdates else {
+            return
+        }
+
+        do {
+            for try await collections in highlightCollectionsUpdates() {
+                highlightCount = HighlightCollection.count(in: collections)
+            }
+        } catch {
+            self.error = error
         }
     }
 
@@ -157,7 +155,6 @@ final class BookmarksViewModel: ObservableObject {
     private let makeHighlightsController: (() -> UIViewController)?
     private let readingPreferences = ReadingPreferences.shared
     private let preferences = BookmarksPreferences.shared
-    private var highlightTask: Task<Void, Never>?
 
     private func requireAuthenticationClient() throws -> any AuthenticationClient {
         guard let authenticationClient else {

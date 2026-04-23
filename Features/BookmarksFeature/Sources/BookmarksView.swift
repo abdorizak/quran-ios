@@ -25,6 +25,7 @@ struct BookmarksView: View {
             shouldShowHighlights: viewModel.shouldShowHighlights,
             highlightCount: viewModel.highlightCount,
             start: { await viewModel.start() },
+            observeHighlights: { await viewModel.observeHighlights() },
             selectAction: { viewModel.navigateTo($0) },
             selectHighlightsAction: { viewModel.showHighlights() },
             deleteAction: { await viewModel.deleteItem($0) },
@@ -47,6 +48,7 @@ private struct BookmarksViewUI: View {
     let highlightCount: Int
 
     let start: AsyncAction
+    let observeHighlights: AsyncAction
     let selectAction: ItemAction<PageBookmark>
     let selectHighlightsAction: () -> Void
     let deleteAction: AsyncItemAction<PageBookmark>
@@ -79,6 +81,7 @@ private struct BookmarksViewUI: View {
             }
         }
         .task { await start() }
+        .task { await observeHighlights() }
         .errorAlert(error: $error)
         .environment(\.editMode, $editMode)
     }
@@ -227,6 +230,7 @@ struct BookmarksView_Previews: PreviewProvider {
                     shouldShowHighlights: true,
                     highlightCount: 6,
                     start: {},
+                    observeHighlights: {},
                     selectAction: { _ in },
                     selectHighlightsAction: {},
                     deleteAction: { item in items = items.filter { $0 != item } },
