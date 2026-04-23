@@ -90,26 +90,30 @@ private struct BookmarksViewUI: View {
 
     private var emptyState: some View {
         VStack(spacing: 16) {
-            #if QURAN_SYNC
-                if shouldShowSyncBanner {
-                    syncBanner
-                        .padding(.horizontal)
-                        .padding(.top, 12)
-                }
-            #endif
-
-            if shouldShowHighlights {
+            if showsTopSections {
                 NoorList {
-                    NoorBasicSection {
-                        highlightsItem
+                    #if QURAN_SYNC
+                        if shouldShowSyncBanner {
+                            NoorBasicSection {
+                                syncBanner
+                            }
+                        }
+                    #endif
+
+                    if shouldShowHighlights {
+                        NoorBasicSection {
+                            highlightsItem
+                        }
                     }
                 }
-                .frame(maxHeight: 92)
                 .padding(.horizontal)
+                .padding(.top, ContentDimension.interPageSpacing)
             }
 
             noData
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
+        .background(Color.systemGroupedBackground)
     }
 
     private var noData: some View {
@@ -127,11 +131,19 @@ private struct BookmarksViewUI: View {
         )
     }
 
+    private var showsTopSections: Bool {
+        #if QURAN_SYNC
+            shouldShowSyncBanner || shouldShowHighlights
+        #else
+            shouldShowHighlights
+        #endif
+    }
+
     private var highlightsItem: some View {
         NoorListItem(
-            image: .init(.bookmark, color: .yellow),
+            leadingView: AnyView(HighlightPaletteIcon()),
             title: .text(l("highlights.title")),
-            accessory: .text(NumberFormatter.shared.format(highlightCount))
+            accessory: .textWithDisclosureIndicator(NumberFormatter.shared.format(highlightCount))
         ) {
             selectHighlightsAction()
         }
@@ -152,12 +164,12 @@ private struct BookmarksViewUI: View {
 
 @MainActor
 private struct BookmarksSyncBanner: View {
-    @ScaledMetric private var closeButtonInset = 8.0
+    @ScaledMetric private var closeButtonInset = ContentDimension.interSpacing
     @ScaledMetric private var containerCornerRadius = Dimensions.cornerRadius
-    @ScaledMetric private var containerPadding = 16.0
-    @ScaledMetric private var contentSpacing = 12.0
-    @ScaledMetric private var titleSpacing = 4.0
-    @ScaledMetric private var trailingSpacing = 8.0
+    @ScaledMetric private var containerPadding = ContentDimension.interPageSpacing + (ContentDimension.interSpacing / 2)
+    @ScaledMetric private var contentSpacing = ContentDimension.interPageSpacing
+    @ScaledMetric private var titleSpacing = ContentDimension.interSpacing / 2
+    @ScaledMetric private var trailingSpacing = ContentDimension.interSpacing
 
     let dismiss: () -> Void
     let signInAction: @MainActor () async -> Void

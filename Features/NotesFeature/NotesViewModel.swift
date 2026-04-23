@@ -51,7 +51,14 @@ final class NotesViewModel: ObservableObject {
             .values()
 
         for await notes in notesSequence {
-            self.notes = await noteItems(with: notes)
+            #if QURAN_SYNC
+                let notesForItems = notes.filter {
+                    !($0.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                }
+            #else
+                let notesForItems = notes
+            #endif
+            self.notes = await noteItems(with: notesForItems)
                 .sorted { $0.note.modifiedDate > $1.note.modifiedDate }
         }
     }

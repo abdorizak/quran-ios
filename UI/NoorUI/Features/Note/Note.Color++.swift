@@ -31,4 +31,14 @@ extension Note.Color {
     public var color: SwiftUI.Color {
         SwiftUI.Color(uiColor)
     }
+
+    public var localizationKey: String {
+        switch self {
+        case .red: return "highlights.color.red"
+        case .green: return "highlights.color.green"
+        case .blue: return "highlights.color.blue"
+        case .yellow: return "highlights.color.yellow"
+        case .purple: return "highlights.color.purple"
+        }
+    }
 }

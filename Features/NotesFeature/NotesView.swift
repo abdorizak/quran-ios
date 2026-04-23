@@ -70,18 +70,17 @@ private struct NotesViewUI: View {
     private func listItem(_ item: NoteItem) -> some View {
         let note = item.note
         let ayah = note.firstVerse
-        let page = ayah.page
         let localizedVerse = note.firstVerse.localizedName
         let arabicSuraName = note.firstVerse.sura.arabicSuraName
         let ayahCount = note.verses.count
         let numberOfAyahs = ayahCount > 1 ? lFormat("notes.verses-count", ayahCount - 1) : ""
-        let color = note.color.color.opacity(QuranHighlights.opacity)
-        return NoorListItem(
+        let verseColor = note.color.color.opacity(QuranHighlights.opacity)
+        return AnnotationListItem(
             subheading: "\(localizedVerse) \(sura: arabicSuraName) \(numberOfAyahs)",
-            rightPretitle: "\(verse: item.verseText, color: color, lineLimit: 2)",
-            title: .text(note.note?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""),
-            subtitle: .init(text: note.modifiedDate.timeAgo(), location: .bottom),
-            accessory: .text(NumberFormatter.shared.format(page.pageNumber))
+            verseText: "\(verse: item.verseText, color: verseColor, lineLimit: 2)",
+            noteText: note.note,
+            modifiedDateText: note.modifiedDate.timeAgo(),
+            pageNumberText: NumberFormatter.shared.format(ayah.page.pageNumber)
         ) {
             selectAction(item)
         }
@@ -99,14 +98,14 @@ struct NotesView_Previews: PreviewProvider {
                     note: Note(
                         verses: [quran.suras[2].verses[3]],
                         modifiedDate: Date(),
-                        note: nil,
+                        note: "A note without highlight",
                         color: .purple
                     ),
                     verseText: ayahText
                 ),
                 NoteItem(
                     note: Note(
-                        verses: Set(quran.suras[2].verses),
+                        verses: Set(quran.suras[2].verses.prefix(2)),
                         modifiedDate: Date().addingTimeInterval(-24 * 60),
                         note: "Remind myself to memorize it",
                         color: .green
@@ -149,8 +148,6 @@ struct NotesView_Previews: PreviewProvider {
             }
         }
     }
-
-    // MARK: Internal
 
     static var previews: some View {
         VStack {

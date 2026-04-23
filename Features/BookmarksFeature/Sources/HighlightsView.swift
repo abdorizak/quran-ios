@@ -1,5 +1,6 @@
 import Localization
 import NoorUI
+import QuranAnnotations
 import QuranKit
 import SwiftUI
 import UIx
@@ -13,7 +14,7 @@ struct HighlightsView: View {
                 NoorListItem(
                     image: .init(.bookmark, color: item.collection.color.color),
                     title: .text(l(item.collection.localizationKey)),
-                    accessory: .text(NumberFormatter.shared.format(item.count))
+                    accessory: .textWithDisclosureIndicator(NumberFormatter.shared.format(item.count))
                 ) {
                     viewModel.showDetails(item)
                 }
@@ -49,39 +50,15 @@ struct HighlightColorView: View {
 
     private func highlightRow(_ item: HighlightsColorViewModel.Item) -> some View {
         let verse = item.ayah
-        let verseHeader = "\(verse.localizedName) \(verse.sura.arabicSuraName)"
-
-        return Button {
+        let lineColor = viewModel.collection.color.color.opacity(QuranHighlights.opacity)
+        return AnnotationListItem(
+            subheading: "\(verse.localizedName) \(sura: verse.sura.arabicSuraName)",
+            verseText: "\(verse: item.verseText, color: lineColor, lineLimit: 2)",
+            noteText: nil,
+            modifiedDateText: item.modifiedDate.timeAgo(),
+            pageNumberText: NumberFormatter.shared.format(verse.page.pageNumber)
+        ) {
             viewModel.navigateTo(item)
-        } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(verseHeader)
-                            .font(.footnote)
-                            .foregroundStyle(Color.secondaryLabel)
-
-                        Text(item.verseText)
-                            .lineLimit(2)
-                            .font(.body)
-                            .foregroundStyle(Color.label)
-                            .multilineTextAlignment(.leading)
-
-                        Text(item.modifiedDate.timeAgo())
-                            .font(.footnote)
-                            .foregroundStyle(Color.secondaryLabel)
-                    }
-
-                    Spacer(minLength: 12)
-
-                    Text(NumberFormatter.shared.format(verse.page.pageNumber))
-                        .font(.body)
-                        .foregroundStyle(Color.secondaryLabel)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 4)
         }
-        .buttonStyle(.plain)
     }
 }
